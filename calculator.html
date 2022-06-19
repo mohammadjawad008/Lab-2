@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title> Calculator.js </title>
+        
+        <style type="text/css">
+            body { background:#2d3033; }
+            .calculator {
+                border:1px solid #ccc;
+                border-radius:1em;
+                margin:auto;
+                width:30em;
+                background:#2d3033;
+            }
+            
+            .calculator .basic button{
+                margin:0.5em;
+            }
+            
+            .calculator .top {
+                display:flex;
+                width:100%;
+                position:relative;
+            }
+            
+            .calculator .clear {
+                width:20%;
+                display: block;
+            }
+            
+            .calculator .viewer {
+                width:100%;
+                display:block;
+                height:5em;
+            }
+            
+            .calculator .pad{
+                border-top:1px solid #373738;
+                display:flex;
+                width:100%;
+                flex-wrap: wrap;
+                flex-direction:row;
+                padding:0;
+                margin:0;
+                margin-top:.2em;
+            }
+            
+            .calculator .numbers{
+                margin:0;
+                display:flex;
+                width:75%;
+                flex-wrap:wrap;
+                border-right:1px solid #373738;
+                box-sizing:border-box;
+                padding:0.5em;
+            }
+            
+            .calculator .numbers button {
+                width:30%;
+            }
+            
+            .calculator .operators {
+                width:23%;
+                display:flex;
+                flex-wrap:wrap;
+                margin:0;
+            }
+            
+            .calculator .unary {
+                width:100%;
+                display:flex;
+                flex-wrap:wrap;
+                margin:0;
+                margin-bottom:0.7em;
+                border-top:1px solid #373738;
+            }
+            
+            .calculator .op {
+                position:absolute;
+                display:block;
+                color:#ff004c;
+                bottom:0;
+                left:1em;
+                z-index:9999;
+            }
+            
+            .calculator .unary button {
+                width:25%;
+                color:#ff004c;
+            }
+            
+            .calculator .unary button:hover{
+                color: #f3f6f9;
+            }
+            
+            .calculator .operators button {
+                width:49%;
+            }
+            
+            .calculator button,
+            .calculator button {
+                color:#f3f6f9;
+                background:#2d3033;
+                border:0;
+                height:3em;
+                font-size:1.5em;
+            }
+            
+            .calculator .operators button {
+                color:#88f3f7;
+            }
+            
+            .calculator .view {
+                width: 98%;
+                height: 100%;
+                position: relative;
+                z-index: 100;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                border: 0;
+                background:#2d3033;
+                font-size:2em;
+                border-top-left-radius:1em;
+                border-top-right-radius:1em;
+                color:#fff;
+                text-align:right;
+            }
+            
+            .calculator .view:focus {
+                border:0;
+                outline:0;
+            }
+            
+            .calculator .numbers button:hover{
+                color: #88f3f7;
+            }
+            
+            .calculator .operators button:hover{
+                color: #f3f6f9;
+            }
+            
+        </style>
+        
+        <script stype="script/javascript">
+            class Calculator{
+                    #viewer
+                    #opd
+                    
+                    #lhs
+                    #op
+                    #rhs
+                    
+                    constructor(root_el){
+                        
+                        if(root_el.charAt(0) !== '#'){
+                            console.log('Root element by be specified by ID');
+                            return;
+                        }
+                        
+                        var tmp = document.querySelector(root_el);
+                        
+                        if(tmp === null){
+                            console.log('Failed to get calculator root');
+                            return;
+                        }
+                        
+                        this.#viewer     = tmp.querySelector(".view");
+                        this.#opd        = tmp.querySelector(".op");
+                        
+                        var equals     = tmp.querySelector(".equals");
+                        var nums       = tmp.querySelectorAll(".num"); 
+                        var ops        = tmp.querySelectorAll(".ops");
+                        var unr        = tmp.querySelectorAll(".un");
+                        
+                        var calc = this;
+                        
+                        for (var i = 0, l = nums.length; i < l; i++) {
+                            nums[i].onclick = function() {
+                                calc.setNum(this.getAttribute("data-num"));
+                            }
+                        }
+
+                        for (var i = 0, l = ops.length; i < l; i++) {
+                            ops[i].onclick = function() { 
+                                calc.setOp(this.getAttribute("data-ops"));
+                            }
+                        }
+
+                        for (var i = 0, l = unr.length; i < l; i++) {
+                            unr[i].onclick = function() { 
+                                calc.unary(this.getAttribute("data-ops"));
+                            }
+                        }
+                        
+                        equals.onclick = function() {
+                            calc.exec();
+                        }
+
+                        tmp.querySelector(".clear").onclick = function() { 
+                            calc.clearAll();
+                        }
+                        
+                        this.clearAll();
+                    }
+                
+                    setNum(value) {
+                        if (this.#op === undefined || this.#op === '') {
+                            if(value === '.' && this.#lhs.search(/\./) !== -1){
+                                return;
+                            }
+                            
+                            if(value === '.' && this.#lhs === ''){
+                                value = '0.'+value;
+                            }
+                            
+                            this.#viewer.value = (this.#lhs += value);
+                        } else {
+                            if(value === '.' && this.#rhs.search(/\./) !== -1){
+                                return;
+                            }
+
+                            if(value === '.' && this.#rhs === ''){
+                                value = '0.'+value;
+                            }
+                            
+                            this.#viewer.value = (this.#rhs += value);
+                        }
+                    }
+                    
+                    unary(func){
+                    
+                        var lhs = parseFloat(this.#lhs);
+                    
+                        switch(func){
+                            case 'sin':
+                                this.#lhs = Math.sin(this.#lhs);
+                                break;
+                        
+                            case 'cos':
+                                this.#lhs = Math.cos(this.#lhs);
+                                break;
+                                
+                            case 'tan':
+                                this.#lhs = Math.tan(this.#lhs);
+                                break;
+                                
+                            case 'ctg':
+                                this.#lhs = 1/Math.tan(this.#lhs);
+                                break;
+                                
+                            case 'sqrt':
+                                this.#lhs = Math.sqrt(this.#lhs);
+                                break;
+                                
+                            case '!':
+                                this.#lhs = Math.round(this.#lhs);
+                                var tmp = this.#lhs; 
+                                for(var i = 1; i < tmp; ++i){
+                                    this.#lhs *= i; 
+                                }
+                                break;
+                        }
+                        
+                        this.#viewer.value = this.#lhs;
+                        this.#rhs = '';
+                        this.#op = undefined;
+                        this.#opd.innerHTML = '';
+                    }
+                    
+                    setOp(op) {
+                        if(this.#op !== undefined && this.#rhs !== '' && this.#lhs !== ''){
+                            this.exec();
+                        }
+                    
+                        if(this.#op === undefined || this.#rhs === '' || this.#rhs === undefined){
+                            if(this.#lhs === undefined || this.#lhs === ''){
+                                this.#lhs = 0;
+                            }
+                            this.#op = op;
+                            this.#opd.innerHTML = op;
+                        }
+                        
+                        this.#viewer.value = '';
+                    }
+
+                    exec() {
+                        var rhs = parseFloat(this.#rhs);
+                        var lhs = parseFloat(this.#lhs);
+                        var result = 0;
+                        
+                        switch (this.#op) {
+                            case "+":
+                                result = rhs + lhs;
+                                break;
+
+                            case "-":
+                                result = lhs - rhs;
+                                break;
+
+                            case "*":
+                                result = lhs * rhs;
+                                break;
+
+                            case "/":
+                                result = lhs / rhs;
+                                break;
+
+                            case "^":
+                                result = Math.pow(lhs,rhs);
+                                break;
+                                
+                                // If equal is pressed without an operator, keep number and continue
+                            default:
+                                result = lhs;
+                        }
+
+                        this.#viewer.value = (this.#lhs = result);
+                        this.#rhs = '';
+                        this.#op = undefined;
+                        this.#opd.innerHTML = '';
+                    }
+
+                    clearAll() {
+                        this.#lhs = ''
+                        this.#op = undefined
+                        this.#rhs = ''
+                        this.#viewer.value = '';
+                        this.#opd.innerHTML = '';
+                    }
+                
+                }
+           
+            (function(window, document, undefined){
+                window.onload = init;
+
+                function init(){
+                    window.calculator = new Calculator('#calculator');
+                }
+
+            })(window, document, undefined);
+           
+        </script>
+        
+    </head>
+    <body>
+        <div id="calculator" class="calculator" style="border:1px solid #ccc">
+            <div class="top">
+                <div class="viewer">
+                    <span class="op"></span>
+                    <input type="text" class="view" disabled>
+                </div>
+            </div>
+            <div class="pad">
+                <div class="numbers">
+                    <button class="num" data-num="7">7</button>
+                    <button class="num" data-num="8">8</button>
+                    <button class="num" data-num="9">9</button>
+                
+                    <button class="num" data-num="4">4</button>
+                    <button class="num" data-num="5">5</button>
+                    <button class="num" data-num="6">6</button>
+                    
+                    <button class="num" data-num="1">1</button>
+                    <button class="num" data-num="2">2</button>
+                    <button class="num" data-num="3">3</button>
+                    
+                    <button class="num" data-num="0">0</button>
+                    <button class="num" data-num=".">.</button>
+                </div>
+                <div class="operators">
+                    <button class="clear">C</button>
+                    <button class="equals">=</button>
+                    <button class="ops"    data-ops="+">+</button>
+                    <button class="ops"    data-ops="-">-</button>
+                    <button class="ops"    data-ops="*">*</button>
+                    <button class="ops"    data-ops="/">/</button>
+                    <button class="ops"    data-ops="^">^</button>
+                </div>
+                <div class="unary">
+                    <button class="un"    data-ops="sin">sin</button>
+                    <button class="un"    data-ops="cos">cos</button>
+                    <button class="un"    data-ops="tan">tan</button>
+                    <button class="un"    data-ops="ctg">ctg</button>
+                    <button class="un"    data-ops="sqrt">sqrt</button>
+                    <button class="un"    data-ops="!">pow</button>
+                </div>
+        </div>
+    </body>
+</html>
